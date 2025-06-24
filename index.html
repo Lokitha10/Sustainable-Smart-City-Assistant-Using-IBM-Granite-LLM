@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart City AI Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f4f8;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    form {
+      background: white;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+      font-weight: bold;
+    }
+    input, textarea, button, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .response-box {
+      white-space: pre-wrap;
+      background: #ecf0f1;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🌆 Smart City AI Assistant</h1>
+
+  <!-- Ask a question -->
+  <form id="ask-form">
+    <label for="query">Ask something:</label>
+    <input type="text" id="query" required />
+    <button type="submit">Ask</button>
+    <div class="response-box" id="ask-response"></div>
+  </form>
+
+  <!-- Upload document -->
+  <form id="upload-form" enctype="multipart/form-data">
+    <label for="document">Upload Document:</label>
+    <input type="file" id="document" name="document" accept=".txt,.pdf,.doc,.docx" required />
+    <button type="submit">Upload & Summarize</button>
+    <div class="response-box" id="upload-response"></div>
+  </form>
+
+  <!-- Get weather -->
+  <form id="weather-form">
+    <label for="weather-city">City for Weather:</label>
+    <input type="text" id="weather-city" required />
+    <button type="submit">Get Weather</button>
+    <div class="response-box" id="weather-response"></div>
+  </form>
+
+  <!-- Get temperature comparison -->
+  <form id="compare-form">
+    <label for="compare-city">City for Temperature Comparison:</label>
+    <input type="text" id="compare-city" required />
+    <button type="submit">Compare Temperature</button>
+    <div class="response-box" id="compare-response"></div>
+  </form>
+
+  <script>
+    const backendURL = "http://127.0.0.1:5000";
+
+    // Ask endpoint
+    document.getElementById("ask-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const query = document.getElementById("query").value;
+      const res = await fetch(`${backendURL}/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+      document.getElementById("ask-response").innerText = data.response;
+    });
+
+    // Upload document endpoint
+    document.getElementById("upload-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const formData = new FormData();
+      const file = document.getElementById("document").files[0];
+      formData.append("document", file);
+      const res = await fetch(`${backendURL}/upload-document`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      document.getElementById("upload-response").innerText =
+        `Summary:\n${data.summary || data.error}`;
+    });
+
+    // Get weather endpoint
+    document.getElementById("weather-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const city = document.getElementById("weather-city").value;
+      const res = await fetch(`${backendURL}/get-weather`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city })
+      });
+      const data = await res.json();
+      document.getElementById("weather-response").innerText =
+        data.error ? data.error :
+        `City: ${data.city}, ${data.country}
+Temp: ${data.temp}°C
+Feels Like: ${data.feels_like}°C
+Humidity: ${data.humidity}%
+Weather: ${data.description}`;
+    });
+
+    // Temperature comparison endpoint
+    document.getElementById("compare-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const city = document.getElementById("compare-city").value;
+      const res = await fetch(`${backendURL}/get-temperature-comparison`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city })
+      });
+      const data = await res.json();
+      document.getElementById("compare-response").innerText =
+        data.error ? data.error :
+        `Analysis for ${data.city}, ${data.country}:\n\n${data.analysis}`;
+    });
+  </script>
+</body>
+</html>

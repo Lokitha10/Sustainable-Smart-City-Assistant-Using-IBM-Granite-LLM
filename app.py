@@ -8,8 +8,10 @@ import tempfile
 import requests
 import datetime
 import json
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app,origins=["*"])
 
 # Local model path after snapshot_download()
 model_path = "hf_models/ibm-granite-3.3-2b-instruct/models--ibm-granite--granite-3.3-2b-instruct/snapshots/707f574c62054322f6b5b04b6d075f0a8f05e0f0"
@@ -73,10 +75,12 @@ def home():
 def ask():
     data = request.json
     user_input = data.get("query", "")
+    print(f"Received user input: {user_input}")
     if not user_input:
         return jsonify({"response": "Please enter a valid query."})
     
     conversation = [{"role": "user", "content": user_input}]
+    print("Conversation:", conversation)
     input_ids = tokenizer.apply_chat_template(
         conversation,
         return_tensors="pt",
@@ -84,8 +88,12 @@ def ask():
         add_generation_prompt=True
     )
     set_seed(42)
+    print("Tokenizer has apply_chat_template:", hasattr(tokenizer, "apply_chat_template"))
     output = model.generate(**input_ids, max_new_tokens=512)
+    print("Model output generated")
+    print("Output shape:", output.shape)
     prediction = tokenizer.decode(output[0, input_ids["input_ids"].shape[1]:], skip_special_tokens=True)
+    print(f"User: {user_input}\nAssistant: {prediction}")
     return jsonify({"response": prediction})
 
 @app.route("/upload-document", methods=["POST"])
