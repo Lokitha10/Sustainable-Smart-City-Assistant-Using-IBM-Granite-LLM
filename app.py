@@ -9,6 +9,7 @@ import requests
 import datetime
 import json
 from flask_cors import CORS
+import random
 
 app = Flask(__name__)
 CORS(app,origins=["*"])
@@ -193,6 +194,7 @@ def get_weather():
 def get_temperature_comparison():
     data = request.json
     city = data.get("city", "")
+    print(f"Received city for temperature comparison: {city}")
     
     if not city:
         return jsonify({"error": "Please provide a city name"})
@@ -203,9 +205,12 @@ def get_temperature_comparison():
             'q': city,
             'appid': OPENWEATHER_API_KEY
         }
+        print(f"Requesting current weather data for: {current_params}")
         current_response = requests.get(OPENWEATHER_URL, params=current_params)
+        print(f"Current weather API response status: {current_response.status_code}")
         current_response.raise_for_status()
         current_data = current_response.json()
+        print(f"Current weather data received: {current_data}")
         
         lat = current_data['coord']['lat']
         lon = current_data['coord']['lon']
@@ -220,13 +225,17 @@ def get_temperature_comparison():
             'units': 'metric',
             'cnt': 40  # 5 days forecast, 3-hour steps (max 40)
         }
+        print(f"Requesting forecast data for coordinates: {lat}, {lon}")
         forecast_response = requests.get(OPENWEATHER_FORECAST_URL, params=forecast_params)
+        print(f"Forecast API response status: {forecast_response.status_code}")
         forecast_response.raise_for_status()
         forecast_data = forecast_response.json()
+        # print(f"Forecast data received: {forecast_data}")
         
         # Get historical data for same days last year
         current_year = datetime.datetime.now().year
         last_year = current_year - 1
+        print(f"Current year: {current_year}, Last year: {last_year}")
         
         # We'll use a different approach since onecall/timemachine might require paid subscription
         # Instead, we'll simulate historical data for demonstration
@@ -242,15 +251,15 @@ def get_temperature_comparison():
                 forecast_temps[date_str] = []
                 
             forecast_temps[date_str].append(item['main']['temp'])
-        
+        print(f"Forecast temperatures organized by date: {forecast_temps.keys()}")
         # Calculate daily averages
         forecast_daily_avg = {}
         for date, temps in forecast_temps.items():
             forecast_daily_avg[date] = sum(temps) / len(temps)
-        
+        print(f"Daily average forecast temperatures: {forecast_daily_avg}")
         # Generate simulated historical data for last year (same dates)
         historical_daily_avg = {}
-        import random
+        
         for date_str in forecast_daily_avg.keys():
             # Extract month and day, use last year
             parts = date_str.split('-')
@@ -260,7 +269,7 @@ def get_temperature_comparison():
             current_temp = forecast_daily_avg[date_str]
             variation = random.uniform(-3, 3)  # Random variation between -3 and +3 degrees
             historical_daily_avg[historical_date] = current_temp + variation
-        
+        print(f"Simulated historical daily average temperatures: {historical_daily_avg}")
         # Format the data for chart display
         chart_data = []
         for current_date, current_temp in forecast_daily_avg.items():
@@ -276,10 +285,10 @@ def get_temperature_comparison():
                 "current": round(current_temp, 1),
                 "historical": round(historical_temp, 1)
             })
-        
+        print(f"Chart data prepared: {chart_data}")
         # Generate analysis of the temperature comparison
         temp_difference = sum(forecast_daily_avg.values()) / len(forecast_daily_avg) - sum(historical_daily_avg.values()) / len(historical_daily_avg)
-        
+        print(f"Temperature difference: {temp_difference:.1f}°C")
         analysis_prompt = f"""
         Analyze the following temperature comparison between this year and last year for {city_name}, {country}:
         - Current year average temperature: {round(sum(forecast_daily_avg.values()) / len(forecast_daily_avg), 1)}°C
@@ -296,11 +305,13 @@ def get_temperature_comparison():
             return_dict=True,
             add_generation_prompt=True
         )
-        
+        print("Input IDs for analysis:", input_ids["input_ids"].shape)
         set_seed(42)
         output = model.generate(**input_ids, max_new_tokens=300)
+        print("Model output for analysis generated")
+        print("Output shape for analysis:", output.shape)
         analysis = tokenizer.decode(output[0, input_ids["input_ids"].shape[1]:], skip_special_tokens=True)
-        
+        print(f"Analysis of temperature comparison: {analysis[:100]}...")  # Log first 100 characters
         return jsonify({
             "city": city_name,
             "country": country,
