@@ -13,6 +13,10 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app,origins=["*"])
 
+from dotenv import load_dotenv
+
+load_dotenv()  # load .env file variables into environment
+
 # Local model path after snapshot_download()
 model_path = "hf_models/ibm-granite-3.3-2b-instruct/models--ibm-granite--granite-3.3-2b-instruct/snapshots/707f574c62054322f6b5b04b6d075f0a8f05e0f0"
 device = "cpu"
@@ -151,6 +155,7 @@ def upload_document():
 def get_weather():
     data = request.json
     city = data.get("city", "")
+    print(f"Received city for weather: {city}")
     
     if not city:
         return jsonify({"error": "Please provide a city name"})
@@ -161,10 +166,12 @@ def get_weather():
             'appid': OPENWEATHER_API_KEY,
             'units': 'metric'  # For Celsius, use 'imperial' for Fahrenheit
         }
+        print(f"Requesting weather data for: {params}")
         response = requests.get(OPENWEATHER_URL, params=params)
+        print(f"Weather API response status: {response.status_code}")
         response.raise_for_status()
         weather_data = response.json()
-        
+        print(f"Weather data received: {weather_data}")
         # Extract relevant information
         result = {
             "city": weather_data['name'],
