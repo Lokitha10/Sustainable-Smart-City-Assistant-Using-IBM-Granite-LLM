@@ -102,6 +102,7 @@ def upload_document():
         return jsonify({"error": "No document part"})
     
     file = request.files['document']
+    print(f"Received file: {file.filename}")
     if file.filename == '':
         return jsonify({"error": "No selected file"})
     
@@ -113,22 +114,26 @@ def upload_document():
         
         # Extract text from the document
         document_text = extract_text_from_file(file_path)
+        print(f"Extracted text from document: {document_text[:100]}...")  # Log first 100 characters
         
         # Create a prompt for document summarization
         summary_prompt = f"Please summarize the following document in the context of sustainable smart cities:\n\n{document_text[:4000]}..."
         
         conversation = [{"role": "user", "content": summary_prompt}]
+        print("Conversation for summarization:", conversation)
         input_ids = tokenizer.apply_chat_template(
             conversation,
             return_tensors="pt",
             return_dict=True,
             add_generation_prompt=True
         )
-        
+        print("Input IDs shape:", input_ids["input_ids"].shape)
         set_seed(42)
         output = model.generate(**input_ids, max_new_tokens=512)
+        print("Model output for summarization generated")
+        print("Output shape:", output.shape)
         summary = tokenizer.decode(output[0, input_ids["input_ids"].shape[1]:], skip_special_tokens=True)
-        
+        print(f"Document summary: {summary[:100]}...")  # Log first 100 characters
         # Remove the temporary file
         try:
             os.remove(file_path)

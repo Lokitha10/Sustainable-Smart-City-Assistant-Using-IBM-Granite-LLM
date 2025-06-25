@@ -1,0 +1,5 @@
+Smart cities use digital technology to enhance performance and well-being, reduce costs and resource consumption, and engage more effectively and actively with their citizens. Key ‘smart’ sectors include transport, energy, health care, water, and waste.
+
+A smart city should be able to respond faster to city and global challenges than one with a simple 'transactional' relationship with its citizens. Examples include traffic management systems, water distribution monitoring, automated energy systems, and real-time air quality sensors.
+
+Developing sustainable smart cities involves improving urban infrastructure, promoting renewable energy usage, and ensuring inclusive access to technology for all citizens.
